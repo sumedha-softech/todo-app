@@ -1,0 +1,45 @@
+﻿::-webkit-scrollbar {
+    position: fixed;
+    width: 7px;
+}
+
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px grey;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: gray;
+    border-radius: 10px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: gray;
+    }
+
+.dropdown-menu .dropdown-item {
+    cursor: pointer
+}
+
+.task-menu,
+.star-div, .trash-icon-complete-section {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.task-item:hover .task-menu,
+.task-item:hover .star-div,
+.task-item:hover .trash-icon-complete-section,
+.task-item.force-hover .task-menu,
+.task-item.force-hover .star-div,
+.task-item.force-hover .trash-icon-complete-section {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+
+/* Always visible if class applied */
+.star-div.always-visible {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}

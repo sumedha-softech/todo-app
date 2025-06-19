@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import CIcon from "@coreui/icons-react";
-import { UpdateGroup, DeleteGroup, DeleteCompletedTask, GetGroupById } from '../../../api/TaskGroupApi';
+import { UpdateSortBy, DeleteGroup, DeleteCompletedTask } from '../../../api/TaskGroupApi';
 import { CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem, CDropdownDivider } from '@coreui/react'
 import { useTaskEvents } from '../../../Hooks/TaskEvents';
 import { cilOptions } from '@coreui/icons';
@@ -13,14 +13,8 @@ const GroupActions = ({ group, isStarredList }) => {
     const [groupId, setGroupId] = useState(0);
 
     const handleSort = async (option, groupId) => {
-        let response = {};
-        response = await GetGroupById(groupId);
-        if (!response.isSuccess) {
-            console.error("error while getting group by id", response);
-            return;
-        }
 
-        response = await UpdateGroup(groupId, { ...response.data, sortBy: option });
+        const response = await UpdateSortBy(groupId, option);
         if (!response.isSuccess) {
             console.log("error while calling api for save group", response);
             return;
@@ -45,7 +39,7 @@ const GroupActions = ({ group, isStarredList }) => {
 
         const updatedGroupTaskList = allGroupTaskList.filter(group => group.groupId !== groupId);
         setAllGroupTaskList(updatedGroupTaskList);
-        const updatedTaskGroups = taskGroups.filter(group => group.listId !== groupId);
+        const updatedTaskGroups = taskGroups.filter(group => group.groupId !== groupId);
         setTaskGroups(updatedTaskGroups);
     };
 
@@ -91,7 +85,7 @@ const GroupActions = ({ group, isStarredList }) => {
                     {!isStarredList &&
                         <>
                             <CDropdownDivider />
-                        <CDropdownItem onClick={() => handleRenameGroup(group.groupId)}>Rename Group</CDropdownItem>
+                            <CDropdownItem onClick={() => handleRenameGroup(group.groupId)}>Rename Group</CDropdownItem>
                             <CDropdownItem disabled={group.groupId === 1} onClick={() => handleDeleteGroup(group.groupId)}>Delete Group</CDropdownItem>
                             {
                                 group.completedTaskList && group.completedTaskList?.length > 0 &&

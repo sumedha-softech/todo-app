@@ -21,6 +21,15 @@
     cursor: pointer
 }
 
+.card-body .add-task-button {
+    border-radius: 10px;
+    padding: 2px 0px 4px 5px;
+}
+
+    .card-body .add-task-button:hover {
+        background-color: rgb(224, 224, 224, 0.35);
+    }
+
 .task-menu,
 .star-div, .trash-icon-complete-section {
     opacity: 0;
@@ -39,7 +48,17 @@
 
 
 /* Always visible if class applied */
-.star-div.always-visible {
+.always-visible {
     opacity: 1 !important;
     pointer-events: auto !important;
+}
+
+
+@media (max-width: 768px) {
+    .task-menu,
+    .star-div,
+    .trash-icon-complete-section {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
 }

@@ -1,61 +1,35 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ToDoApp.Server.Contracts;
-using ToDoApp.Server.Models.Entity;
+using ToDoApp.Server.Models;
 
 namespace ToDoApp.Server.Controllers;
-
 [ApiController]
-[Route("[controller]")]
-// ToDo: Add server side validation.
-public class TaskGroupsController(ITaskGroupService taskListService, ITaskService taskService) : ControllerBase
+[Route("api/[controller]")]
+public class TaskGroupsController(ITaskGroupService taskGroupService) : ControllerBase
 {
     #region [Get Task Group List]
     [HttpGet("")]
-    public async Task<IActionResult> Get()
-    {
-        var response = await taskListService.GetTaskGroupsAsync();
-        if (!response.IsSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
-    }
+    public async Task<IActionResult> Get() => Ok(await taskGroupService.GetTaskGroupsAsync());
     #endregion [Get Task Group List]
 
     #region [Get Task Group By Id]
     [HttpGet("{id}")]
-    public async Task<IActionResult> Get(int id)
-    {
-        var response = await taskListService.GetTaskGroupByIdAsync(id);
-        if (!response.IsSuccess)
-        {
-            return BadRequest(response);
-        }
-
-        return Ok(response);
-    }
+    public async Task<IActionResult> Get(int id) => Ok(await taskGroupService.GetTaskGroupByIdAsync(id));
 
     #endregion [Get Task Group By Id]
 
     #region [Add Task Group]
     [HttpPost("")]
-    public async Task<IActionResult> Post([FromBody] TaskGroup model)
-    {
-        var response = await taskListService.AddOrUpdateTaskGroupAsync(0, model);
-        if (!response.IsSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
-    }
+    public async Task<IActionResult> Post([FromBody] AddGroupRequestModel model) => Ok(await taskGroupService.AddGroupAsync(model));
 
     #endregion [Add Task Group]
 
     #region [Edit Task Group]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, [FromBody] TaskGroup model)
+    public async Task<IActionResult> Put(int id, [FromBody] UpdateGroupRequestModel model)
     {
-        var response = await taskListService.AddOrUpdateTaskGroupAsync(id, model);
+        var response = await taskGroupService.UpdateGroupAsync(id, model);
         if (!response.IsSuccess)
         {
             return BadRequest(response);
@@ -69,54 +43,55 @@ public class TaskGroupsController(ITaskGroupService taskListService, ITaskServic
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var response = await taskListService.DeleteGroupAsync(id);
-        if (response.IsSuccess)
+       var result= await taskGroupService.DeleteGroupAsync(id);
+        if (!result.IsSuccess)
         {
-            return Ok(response);
+            return BadRequest(result);
         }
-        return BadRequest(response);
+        return Ok(result);
     }
     #endregion [Delete Task Group]
 
     #region [Get All Group With Their Task]
     [HttpGet("tasks")]
-    public async Task<IActionResult> GetAllGroupsTaskListAsync()
-    {
-        var response = await taskService.GetAllGroupWithTaskListAsync();
-        if (!response.IsSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
-    }
+    public async Task<IActionResult> GetAllGroupsTaskListAsync() => Ok(await taskGroupService.GetAllGroupWithTaskListAsync());
 
     #endregion [Get All Group With Their Task ]
 
     #region [Delete Completed Task]
-
     [HttpDelete("{id}/complete")]
-    public async Task<IActionResult> DeleteCompletedTask(int id)
-    {
-        var response = await taskService.DeleteCompletedTaskAsync(id);
-        if (!response.IsSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
-    }
+    public async Task<IActionResult> DeleteCompletedTask(int id) => Ok(await taskGroupService.DeleteCompletedTaskAsync(id));
     #endregion [Delete Completed Task]
 
     #region [Get All Starred Task]
     [HttpGet("tasks/star")]
-    public async Task<IActionResult> GetAllStarredTask()
+    public async Task<IActionResult> GetAllStarredTask()=> Ok(await taskGroupService.GetStarredTaskAsync());
+    #endregion [Get All Starred Task]
+
+    #region [Update Task Group Visibility]
+    [HttpPatch("{groupId}/visibility/{isVisible}")]
+    public async Task<IActionResult> UpdateGroupVisibility(int groupId, bool isVisible)
     {
-        var response = await taskService.GetStarredTaskAsync();
+        var response = await taskGroupService.UpdateVisibilityStatusAsync(groupId, isVisible);
         if (!response.IsSuccess)
         {
             return BadRequest(response);
         }
         return Ok(response);
     }
-    #endregion [Get All Starred Task]
+    #endregion [Update Task Group Visibility]
+
+    #region [Update SortBy]
+    [HttpPatch("{groupId}/sortBy/{sort}")]
+    public async Task<IActionResult> UpdateSortBy(int groupId, string sort)
+    {
+        var response = await taskGroupService.UpdateSortByAsync(groupId, sort);
+        if (!response.IsSuccess)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+    #endregion [Update SortBy]
 }
 

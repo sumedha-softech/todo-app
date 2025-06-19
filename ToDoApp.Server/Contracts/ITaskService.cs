@@ -1,5 +1,4 @@
 ﻿using ToDoApp.Server.Models;
-using ToDoApp.Server.Models.Entity;
 
 namespace ToDoApp.Server.Contracts;
 
@@ -19,11 +18,18 @@ public interface ITaskService
     Task<ResponseModel> GetTaskByIdAsync(int id);
 
     /// <summary>
-    /// Add of update a task
+    /// Add a task
     /// </summary>
-    /// <param name="task"></param>
+    /// <param name="model"></param>
     /// <returns></returns>
-    Task<ResponseModel> AddOrUpdateTaskAsync(int id,Models.Entity.Task task);
+    Task<ResponseModel> AddTaskAsync(AddTaskRequestModel model);
+
+    /// <summary>
+    /// update task
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    Task<ResponseModel> UpdateTaskAsync(int id, UpdateTaskRequestModel model);
 
     /// <summary>
     /// delete a task
@@ -33,29 +39,22 @@ public interface ITaskService
     Task<ResponseModel> DeleteAsync(int id);
 
     /// <summary>
-    /// Retrieves all task groups along with their associated tasks.
-    /// </summary>
-    /// <returns></returns>
-    Task<ResponseModel> GetAllGroupWithTaskListAsync();
-
-    /// <summary>
     /// update task for starred task
     /// </summary>
     /// <returns></returns>
     Task<ResponseModel> ToggleStarTaskAsync(int taskId);
 
     /// <summary>
-    /// Get all starred task async
+    /// toggle task completion status
     /// </summary>
     /// <returns></returns>
-    Task<ResponseModel> GetStarredTaskAsync();
+    Task<ResponseModel> UpdateTaskCompletionStatusAsync(int taskId);
 
     /// <summary>
-    /// delete all completed task of a spacific group
+    /// move task to a existing group
     /// </summary>
-    /// <param name="groupId"></param>
     /// <returns></returns>
-    Task<ResponseModel> DeleteCompletedTaskAsync(int groupId);
+    Task<ResponseModel> MoveTaskToExistingGroupAsync(int taskId, int groupId);
 
     /// <summary>
     /// move task to a new group
@@ -63,5 +62,6 @@ public interface ITaskService
     /// <param name="taskId"></param>
     /// <param name="group"></param>
     /// <returns></returns>
-    Task<ResponseModel> MoveTaskToNewList(int taskId, TaskGroup group);
+    Task<ResponseModel> MoveTaskToNewGroup(int taskId, AddGroupRequestModel model);
+
 }

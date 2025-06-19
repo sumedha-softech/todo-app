@@ -8,12 +8,11 @@ const AddTaskButton = ({ groupId, isStarredTask }) => {
 
     return (
         <>
-            <div
-                className="mb-3 d-flex align-items-center gap-2"
+            <div className="mb-3 d-flex align-items-center gap-2 add-task-button"
                 style={{ cursor: 'pointer', color: 'cornflowerblue' }}
                 onClick={() => setVisibleModel(true)}
             >
-                <CIcon icon={cibSymantec} />
+                <CIcon icon={cibSymantec} size="xl" />
                 <span>{isStarredTask ? "Add a star task" : "Add a task"} </span>
             </div>
 

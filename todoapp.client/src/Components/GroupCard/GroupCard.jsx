@@ -1,5 +1,5 @@
 import { useTaskEvents } from '../../Hooks/TaskEvents';
-import { UpdateTask } from '../../api/TaskApi';
+import { UpdateTaskCompletionStatus } from '../../api/TaskApi';
 import {
     AddTaskButton,
     CompletedTaskList,
@@ -14,9 +14,9 @@ const GroupCard = ({ group, isStarredList }) => {
     const { RefreshTaskLists } = useTaskEvents();
 
     // mark complete or uncomplete a task
-    const handleCompleteTask = async (task, isComplete = true) => {
+    const handleCompleteTask = async (taskId) => {
 
-        let response = await UpdateTask(task.taskId, { ...task, isCompleted: isComplete });
+        let response = await UpdateTaskCompletionStatus(taskId);
         if (!response.isSuccess) {
             console.error("error while updating task for complete or uncomplete", response);
             alert(`Error! ${response.message}`);

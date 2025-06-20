@@ -1,6 +1,5 @@
 import React, { useEffect, useRef,useContext } from 'react'
 import { Context } from '../../global/MyContext';
-import { NavLink } from 'react-router-dom';
 
 import {
     CContainer,
@@ -11,9 +10,9 @@ import {
     CHeader,
     CHeaderNav,
     CHeaderToggler,
-    CNavLink,
     CNavItem,
     useColorModes,
+    CFormInput
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -24,7 +23,7 @@ import {
 } from '@coreui/icons'
 
 const AppHeader = () => {
-    const { sidebarShow, setSidebarShow } = useContext(Context);
+    const { sidebarShow, setSidebarShow, setSearchTerm } = useContext(Context);
     const headerRef = useRef()
     const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
 
@@ -45,10 +44,14 @@ const AppHeader = () => {
                     <CIcon icon={cilMenu} size="lg" />
                 </CHeaderToggler>
                 <CHeaderNav className="d-none d-md-flex text-left">
-                    <CNavItem>
-                        <CNavLink to="/" as={NavLink}>
-                            Dashboard
-                        </CNavLink>
+                    <CNavItem className="ms-5">
+                        <CFormInput
+                            onChange={(e) => setSearchTerm(e.target.value) }
+                            type="search"
+                            id="searchInput"
+                            placeholder="search..."
+                            aria-describedby="exampleFormControlInputHelpInline"
+                        />
                     </CNavItem>
                 </CHeaderNav>
                 <CHeaderNav className="ms-auto">

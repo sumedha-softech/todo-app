@@ -47,14 +47,18 @@ export default defineConfig({
     },
     server: {
         proxy: {
-            '^/TaskGroups': {
+            '^/api/TaskGroups': {
                 target,
                 secure: false
             },
-            '^/Tasks': {
+            '^/api/Tasks': {
                 target,
                 secure: false
-            }
+            }/*,
+            '^/api/Auth': {
+                target,
+                secure: false
+            }*/
         },
         port: 56115,
         https: {

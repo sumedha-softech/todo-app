@@ -10,7 +10,11 @@ export function useTaskEvents() {
         allStarredTasks,
         setallStarredTasks,
         taskGroups,
-        setTaskGroups
+        setTaskGroups,
+        searchedTask,
+        setSearchedTask,
+        searchTerm,
+        setSearchTerm
     } = useContext(Context);
 
     // Refresh groups task list and starred task list
@@ -50,6 +54,10 @@ export function useTaskEvents() {
         allStarredTasks,
         setallStarredTasks,
         taskGroups,
-        setTaskGroups
+        setTaskGroups,
+        searchedTask,
+        setSearchedTask,
+        searchTerm,
+        setSearchTerm
     };
 }

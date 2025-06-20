@@ -8,12 +8,12 @@ public class BaseRepository<T>(IDatabase database) : IBaseRepository<T> where T 
 {
     public async Task<T> GetByIdAsync(int id)
     {
-        return await database.SingleOrDefaultByIdAsync<T>(id);
+        return await database.SingleOrDefaultByIdAsync<T>(id).ConfigureAwait(false);
     }
 
     public async Task<IEnumerable<T>> GetAllAsync()
     {
-        return await database.FetchAsync<T>();
+        return await database.FetchAsync<T>().ConfigureAwait(false);
     }
 
     public async Task AddAsync(T entity)

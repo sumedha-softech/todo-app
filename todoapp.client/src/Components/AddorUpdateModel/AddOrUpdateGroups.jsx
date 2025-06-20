@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import { AddGroup, UpdateGroup, GetGroupById, GetGroups, GetGroupsTaskList, GetStarredTask } from '@/api/TaskGroupApi';
 import { MoveTaskToNewGroup } from '../../api/TaskApi';
@@ -11,8 +12,8 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
     const [disable, setDisable] = useState(false);
     const [isShowError, setIsShowError] = useState(false);
     const [groupName, setGroupName] = useState('');
-    const [groupData, setGroupData] = useState({});
     const [responseError, setResponseError] = useState(null);
+    const [validationErrors, setValidationErrors] = useState({});
 
     useEffect(() => {
         (async () => {
@@ -21,8 +22,7 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
                 if (res.isSuccess) {
 
                     let itemToEdit = res.data;
-                    setGroupName(itemToEdit.listName ?? '');
-                    setGroupData(itemToEdit);
+                    setGroupName(itemToEdit.groupName ?? '');
                 }
             }
 
@@ -35,7 +35,7 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
         let response = {}
 
         if (taskIdToMove && taskIdToMove != null && taskIdToMove != undefined && taskIdToMove > 0) {
-            response = await MoveTaskToNewGroup(taskIdToMove, { listId: 0, listName: groupName, isEnableShow: true, sortBy: 'My order' });
+            response = await MoveTaskToNewGroup(taskIdToMove, { groupName: groupName });
             if (!response.isSuccess) {
                 console.error("error while moving task to new group ", response);
                 setResponseError(response.message);
@@ -46,12 +46,17 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
         } else {
 
             if (groupId > 0) {
-                response = await UpdateGroup(groupId, { ...groupData, listName: groupName });
+                response = await UpdateGroup(groupId, { groupName: groupName });
             } else {
-                response = await AddGroup({ listId: 0, listName: groupName, isEnableShow: true, sortBy: 'My order' });
+                response = await AddGroup({ groupName: groupName });
             }
 
             if (!response.isSuccess) {
+                if (response?.status === 400 && response?.errors) {
+                    setValidationErrors(response?.errors)
+                } else {
+                    setResponseError(response.message);
+                }
                 console.log("Error while adding or updating group", response);
                 setResponseError(response.message);
                 setDisable(false);
@@ -112,15 +117,28 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
 
     return (
 
-        < Modal show={visible} onHide={() => handleClose()}>
-            <Modal.Header closeButton>
+        < Modal show={visible} onHide={() => handleClose()} centered size="sm">
+           {/* <Modal.Header closeButton>
                 <Modal.Title>{groupId > 0 ? "Rename Group" : "Add Group"}</Modal.Title>
-            </Modal.Header>
+            </Modal.Header>*/}
             {responseError && <p className=" text-center mt-2 mb-0 text-danger">{responseError}</p>}
             <Modal.Body>
-                Name: <input type="text" autoFocus className="form-control" value={groupName} onChange={(e) => handleErrorAddGroup(e.target.value)} />
-                <br />
-                <span className={`${isShowError == false ? "d-none" : ""} text-danger`}>please enter value</span>
+                <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                    <Form.Label>Enter group name</Form.Label>
+                    <Form.Control
+                        onChange={(e) => handleErrorAddGroup(e.target.value)}
+                        type="text"
+                        placeholder="Enter name"
+                        autoFocus
+                        value={groupName}
+                    />
+                    <Form.Text className={`text-danger ${!isShowError ? "d-none" : ""}`}>
+                        please enter group name.
+                    </Form.Text>
+                    <Form.Text className={`text-danger ${!validationErrors.GroupName ? "d-none" : ""}`}>
+                        {validationErrors.GroupName && validationErrors.GroupName[0]}
+                    </Form.Text>
+                </Form.Group>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={() => handleClose()}>

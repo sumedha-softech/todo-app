@@ -5,7 +5,7 @@ import { FormateDate } from '../../../global/Helper';
 import { ToggleStarTask } from '../../../api/TaskApi';
 import { useTaskEvents } from '../../../Hooks/TaskEvents';
 import { AddOrUpdateTask, TaskActions } from '../../index';
-import { CListGroup, CListGroupItem, CFormCheck } from '@coreui/react'
+import {  CListGroupItem, CFormCheck } from '@coreui/react'
 
 const InCompleteTasks = ({ groupId, task, onComplete }) => {
     const { RefreshTaskLists } = useTaskEvents();
@@ -16,6 +16,7 @@ const InCompleteTasks = ({ groupId, task, onComplete }) => {
         setEditTaskId(taskId);
         setVisibleModel(true);
     }
+
 
     // mark a task to star or undo
     const handleToggleStar = async (taskId) => {
@@ -30,10 +31,10 @@ const InCompleteTasks = ({ groupId, task, onComplete }) => {
     return (
         <>
             <CListGroupItem className={`d-flex justify-content-between align-items-start position-relative task-item `}>
-                <CFormCheck type="radio" style={{ cursor: 'pointer' }} onClick={() => onComplete(task, true)} />
+                <CFormCheck type="radio" style={{ cursor: 'pointer', border: "1px solid cornflowerblue" }} onClick={() => onComplete(task.taskId)} />
                 <div className="flex-grow-1 text-wrap text-break" onClick={() => handleEditTask(task.taskId)} style={{ cursor: 'pointer' }}>
 
-                    <div className="ms-4">{task.title}</div>
+                    <div className="ms-4" style={{ fontWeight: '600' }}>{task.title}</div>
                     <div className="ms-4">{task.description}</div>
                     {
                         task.toDoDate?.trim() && <span className="badge bg-light text-dark mt-1 ms-4">{FormateDate(task.toDoDate)}</span>

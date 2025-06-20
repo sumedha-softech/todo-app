@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using NPoco;
 using ToDoApp.Server.Contracts;
+using ToDoApp.Server.Middleware;
 using ToDoApp.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,7 +37,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

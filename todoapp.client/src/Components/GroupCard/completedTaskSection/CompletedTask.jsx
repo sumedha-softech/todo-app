@@ -36,12 +36,12 @@ const CompletedTask = ({ groupId, task, onComplete }) => {
                     <CIcon
                         icon={cibVerizon}
                         className="mt-1"
-                        onClick={() => onComplete(task, false)}
+                        onClick={() => onComplete(task.taskId)}
                         style={{ cursor: 'pointer' }}
                     />
                 </div>
                 <div className="flex-grow-1 text-wrap text-break" onClick={() => handleEditTask(task.taskId)} style={{ cursor: 'pointer' }}>
-                    <div className="ms-4"><del>{task.title}</del></div>
+                    <div className="ms-4" style={{ fontWeight: '600' }}><del>{task.title}</del></div>
                     <div className="ms-4">{task.description}</div>
                     {
                         task.completeDate?.trim() && <div className="small mt-1"> Completed: {FormateDate(task.completeDate)}</div>

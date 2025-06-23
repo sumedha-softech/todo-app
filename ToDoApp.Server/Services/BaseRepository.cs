@@ -41,14 +41,19 @@ public class BaseRepository<T>(IDatabase database) : IBaseRepository<T> where T 
         transaction.Complete();
     }
 
-    public async Task<IEnumerable<T>> QueryAsync(string sql, params object[] args)
+    public async Task<IEnumerable<T>> QueryToGetRecordAsync(string sql, params object[] args)
     {
         return await database.FetchAsync<T>(sql, args);
     }
 
-    public IAsyncQueryProviderWithIncludes<T> QueryNewAsync()
+    public IAsyncQueryProviderWithIncludes<T> QueryAsync()
     {
         return database.QueryAsync<T>();
+    }
+
+    public async Task ExecuteSqlAsync(string sql, params object[] args)
+    {
+        await database.ExecuteAsync(sql, args).ConfigureAwait(false);
     }
 
 }

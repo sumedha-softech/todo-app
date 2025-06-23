@@ -17,6 +17,7 @@ import TaskActions from './GroupCard/completedTaskSection/TaskActions'
 import AddTaskButton from './AddTaskButtons/AddTaskButton'
 import NoTaskYetMessage from './NoTaskYetMessage/NoTaskYetMessage'
 import TaskCompletedMessage from './AllTaskCompletedMessage/TaskCompletedMessage'
+import SubTaskItem from './GroupCard/SubTasks/SubTaskItam'
 
 
 export {
@@ -38,5 +39,6 @@ export {
     TaskActions,
     AddTaskButton,
     NoTaskYetMessage,
-    TaskCompletedMessage
+    TaskCompletedMessage,
+    SubTaskItem
 }

@@ -4,8 +4,8 @@ import { cilStar, cibMacys } from '@coreui/icons'
 import { FormateDate } from '../../../global/Helper';
 import { ToggleStarTask } from '../../../api/TaskApi';
 import { useTaskEvents } from '../../../Hooks/TaskEvents';
-import { AddOrUpdateTask, TaskActions } from '../../index';
-import {  CListGroupItem, CFormCheck } from '@coreui/react'
+import { AddOrUpdateTask, SubTaskItem, TaskActions } from '../../index';
+import { CListGroupItem, CFormCheck } from '@coreui/react'
 
 const InCompleteTasks = ({ groupId, task, onComplete }) => {
     const { RefreshTaskLists } = useTaskEvents();
@@ -30,8 +30,8 @@ const InCompleteTasks = ({ groupId, task, onComplete }) => {
 
     return (
         <>
-            <CListGroupItem className={`d-flex justify-content-between align-items-start position-relative task-item `}>
-                <CFormCheck type="radio" style={{ cursor: 'pointer', border: "1px solid cornflowerblue" }} onClick={() => onComplete(task.taskId)} />
+            <CListGroupItem className={`d-flex justify-content-between align-items-start position-relative task-item `} style={{ borderBottom: "none" }}>
+                <CFormCheck type="radio" style={{ cursor: 'pointer', border: "1px solid cornflowerblue" }} onClick={() => onComplete(task.taskId, false)} />
                 <div className="flex-grow-1 text-wrap text-break" onClick={() => handleEditTask(task.taskId)} style={{ cursor: 'pointer' }}>
 
                     <div className="ms-4" style={{ fontWeight: '600' }}>{task.title}</div>
@@ -42,14 +42,19 @@ const InCompleteTasks = ({ groupId, task, onComplete }) => {
                 </div>
 
                 <div className="task-actions d-flex align-items-start">
-                    <TaskActions task={task} />
+                    <TaskActions task={task} isSubTask={false} groupId={groupId} />
                     <div className={`btn-gorup star-div ${task.isStarred ? 'always-visible' : ''}`}>
                         <button className={`btn btn-undefined `} type="button" onClick={() => handleToggleStar(task.taskId)}>
-                            <CIcon icon={task.isStarred ? cibMacys :cilStar} className="ms-2 action-icon" />
+                            <CIcon icon={task.isStarred ? cibMacys : cilStar} className="ms-2 action-icon" />
                         </button>
                     </div>
                 </div>
             </CListGroupItem>
+            {
+                task.subTasks && task.subTasks.length > 0 && task.subTasks.map(subTask => (
+                    <SubTaskItem key={subTask.subTaskId} subTask={subTask} groupId={groupId} onComplete={onComplete} />
+                ))}
+                
 
             {visibleModel && editTaskId > 0 && (
                 <AddOrUpdateTask

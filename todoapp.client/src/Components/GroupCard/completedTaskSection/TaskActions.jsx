@@ -1,19 +1,27 @@
 import { useState } from "react";
 import CIcon from "@coreui/icons-react";
-import { cilOptions, cilTrash, cilCheck } from "@coreui/icons";
+import { cilOptions, cilTrash, cilListLowPriority } from "@coreui/icons";
 import { useTaskEvents } from "../../../Hooks/TaskEvents";
 import { CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem, CDropdownDivider } from '@coreui/react'
 import { DeleteTask, MoveTaskToExistingGroup } from "../../../api/TaskApi";
-import { AddOrUpdateGroups } from "../../index";
+import { DeleteSubTask, MoveSubTaskToExistingGroup } from "../../../api/subTaskAPi";
+import { AddOrUpdateGroups, AddOrUpdateTask } from "../../index";
 
-const TaskActions = ({ task }) => {
+const TaskActions = ({ task, isSubTask, groupId }) => {
     const { taskGroups, RefreshTaskLists } = useTaskEvents();
     const [taskIdForMove, setTaskIdForMove] = useState(0);
-    const [visibleModelPopup, setVisibleModelPopup] = useState(false);
+    const [visibleTaskModelPopup, setVisibleTaskModelPopup] = useState(false);
+    const [visibleGroupModelPopup, setVisibleGroupModelPopup] = useState(false);
 
     // Delete task handler 
     const handleDeleteTask = async (taskId) => {
-        const res = await DeleteTask(taskId);
+        let res = {};
+        if (isSubTask) {
+            res = await DeleteSubTask(taskId);
+        } else {
+            res = await DeleteTask(taskId);
+        }
+
         if (!res.isSuccess) {
             console.error("error while delete task", res);
             return;
@@ -25,7 +33,12 @@ const TaskActions = ({ task }) => {
     // handle move task to anothe created group
     const handleMoveTask = async (taskId, groupId) => {
 
-        const res = await MoveTaskToExistingGroup(taskId, groupId);
+        let res = {};
+        if (isSubTask) {
+            res = await MoveSubTaskToExistingGroup(taskId, groupId);
+        } else {
+            res = await MoveTaskToExistingGroup(taskId, groupId);
+        }
         if (!res.isSuccess) {
             console.log("error while moving task to another group ", res);
             alert(res.message);
@@ -42,33 +55,48 @@ const TaskActions = ({ task }) => {
                     <CIcon icon={cilOptions} />
                 </CDropdownToggle>
                 <CDropdownMenu>
-                    <CDropdownItem onClick={() => handleDeleteTask(task.taskId)}> <CIcon icon={cilTrash} /> Delete</CDropdownItem>
+                    {!isSubTask &&
+                        <CDropdownItem onClick={() => setVisibleTaskModelPopup(true)}>
+                            <CIcon icon={cilListLowPriority} /> Add sub Task</CDropdownItem>
+                    }
+                    <CDropdownItem onClick={() => handleDeleteTask(!isSubTask ? task.taskId : task.subTaskId)}> <CIcon icon={cilTrash} /> Delete</CDropdownItem>
                     <CDropdownDivider />
 
                     <CDropdownItem disabled><strong>My Task</strong></CDropdownItem>
                     {taskGroups &&
                         taskGroups.map(groupItem => (
-                            <CDropdownItem key={groupItem.groupId} onClick={() => handleMoveTask(task.taskId, groupItem.groupId)}>
-                                {task.taskGroupId === groupItem.groupId ? <CIcon icon={cilCheck} /> : ""}
-                                {groupItem.groupName}
+                            <CDropdownItem key={groupItem.groupId} onClick={() => handleMoveTask(!isSubTask ? task.taskId : task.subTaskId, groupItem.groupId)}>
+                                {groupId === groupItem.groupId ? <strong>{groupItem.groupName} </strong> : groupItem.groupName}
                             </CDropdownItem>
                         ))
                     }
 
                     <CDropdownItem onClick={() => {
-                        setTaskIdForMove(task.taskId);
-                        setVisibleModelPopup(true);
+                        setTaskIdForMove(!isSubTask ? task.taskId : task.subTaskId);
+                        setVisibleGroupModelPopup(true);
                     }}>
-                        new group
+                        New group
                     </CDropdownItem>
                 </CDropdownMenu>
             </CDropdown>
-            {visibleModelPopup &&
+
+            {visibleTaskModelPopup && !isSubTask && (
+                <AddOrUpdateTask
+                    visible={visibleTaskModelPopup}
+                    setVisibility={setVisibleTaskModelPopup}
+                    taskId={task.taskId}
+                    isStarredTask={false}
+                    isSubTask={true}
+                    isRequestForSubTaskAdd={true}
+                />
+            )}
+            {visibleGroupModelPopup && taskIdForMove && taskIdForMove > 0 &&
                 <AddOrUpdateGroups
-                    visible={visibleModelPopup}
-                    setVisibility={setVisibleModelPopup}
+                    visible={visibleGroupModelPopup}
+                    setVisibility={setVisibleGroupModelPopup}
                     groupId={0}
                     taskIdToMove={taskIdForMove}
+                    isSubTask={isSubTask}
                 />
             }
         </>

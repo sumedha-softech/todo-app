@@ -8,6 +8,6 @@ public class GroupTaskListVM
     public string? GroupName { get; set; }
     public string SortBy { get; set; }
     public bool isEnableShow { get; set; }
-    public List<Entity.Task>? TaskList { get; set; }
-    public List<Entity.Task>? CompletedTaskList { get; set; } 
+    public List<TaskListVM>? TaskList { get; set; }
+    public List<CompletedTaskListVM>? CompletedTaskList { get; set; } 
 }

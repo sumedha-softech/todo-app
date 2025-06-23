@@ -4,13 +4,40 @@ using ToDoApp.Server.Models.Entity;
 
 namespace ToDoApp.Server.Services;
 
-public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepository<TaskGroup> taskGroupRepo) : ITaskService
+public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepository<TaskGroup> taskGroupRepo, IBaseRepository<SubTask> subTaskRepo) : ITaskService
 {
     public async Task<ResponseModel> GetAllTaskAsync()
     {
+        // Fetch all tasks from the repository
+        var tasks = await taskRepo.GetAllAsync();
+        if (tasks == null || !tasks.Any())
+        {
+            return new ResponseModel
+            {
+                IsSuccess = false,
+                Message = "No tasks found"
+            };
+        }
+
+        var subTasks = await subTaskRepo.GetAllAsync();
+        // Map the tasks to a list of TaskListVM
+        var data = tasks.Select(task => new TaskListVM
+        {
+            TaskId = task.TaskId,
+            Title = task.Title,
+            Description = task.Description,
+            ToDoDate = task.ToDoDate,
+            CreateDate = task.CreateDate,
+            CompleteDate = task.CompleteDate,
+            IsStarred = task.IsStarred,
+            IsCompleted = task.IsCompleted,
+            TaskGroupId = task.TaskGroupId,
+            SubTasks = subTasks != null && subTasks.Count() > 0 ? subTasks.Where(SubTask => SubTask.TaskId == task.TaskId).ToList() : null
+        }).ToList();
+
         return new()
         {
-            Data = await taskRepo.GetAllAsync(),
+            Data = data,
             IsSuccess = true
         };
     }
@@ -21,15 +48,18 @@ public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepo
         var result = await taskRepo.GetByIdAsync(id).ConfigureAwait(false);
         response.Data = new
         {
-            result?.TaskId,
-            result?.Title,
-            result?.Description,
-            ToDoDate = result?.ToDoDate != null ? result?.ToDoDate?.ToString("yyyy-MM-dd") : null,
-            result?.CreateDate,
-            result?.CompleteDate,
-            result?.IsStarred,
-            result?.IsCompleted,
-            result?.TaskGroupId
+            result.TaskId,
+            result.Title,
+            result.Description,
+            ToDoDate = result.ToDoDate != null ? result.ToDoDate?.ToString("yyyy-MM-dd") : null,
+            result.CreateDate,
+            result.CompleteDate,
+            result.IsStarred,
+            result.IsCompleted,
+            result.TaskGroupId,
+            SubTasks = await subTaskRepo.GetAllAsync() is var subTasks && subTasks != null && subTasks.Count() > 0
+                ? subTasks.Where(subTask => subTask.TaskId == result.TaskId).ToList()
+                : null
         };
         response.IsSuccess = result != null;
         if (!response.IsSuccess)
@@ -42,7 +72,7 @@ public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepo
     public async Task<ResponseModel> AddTaskAsync(AddTaskRequestModel model)
     {
         ResponseModel response = new();
-        var task = new Models.Entity.Task
+        await taskRepo.AddAsync(new Models.Entity.Task
         {
             Title = model.Title,
             Description = model.Description,
@@ -51,9 +81,7 @@ public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepo
             IsCompleted = false,
             TaskGroupId = model.TaskGroupId,
             CreateDate = DateTime.Now
-        };
-
-        await taskRepo.AddAsync(task);
+        });
         response.Message = "task added successfully!!";
         response.IsSuccess = true;
         return response;
@@ -95,6 +123,24 @@ public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepo
                 Message = "Task not found"
             };
         }
+
+        // Delete all subtasks associated with the task
+        var subTasks = await subTaskRepo.QueryAsync().Where(x => x.TaskId == id).ToList();
+        if (subTasks != null && subTasks.Any())
+        {
+            var subTaskIdsForDelete = subTasks.Select(x => x.SubTaskId).ToList();
+
+            try
+            {
+                await subTaskRepo.ExecuteSqlAsync($"DELETE FROM SubTask WHERE SubTaskId IN ({string.Join(",", subTaskIdsForDelete)})");
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
         await taskRepo.DeleteAsync(id);
         return new()
         {
@@ -133,6 +179,18 @@ public class TaskService(IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepo
             response.Message = "Task not found";
             return response;
         }
+
+        if (!task.IsCompleted)
+        {
+            var subTasks = await subTaskRepo.QueryAsync().Where(x => x.TaskId == taskId && !x.IsCompleted).ToList();
+            if (subTasks != null && subTasks.Count > 0)
+            {
+                var subTaskIds = subTasks.Select(x => x.SubTaskId).ToList();
+                var query = $"Update SubTask Set IsCompleted=1, CompleteDate=@CompleteDate where SubTaskId IN ({string.Join(",", subTaskIds)})";
+                await subTaskRepo.ExecuteSqlAsync(query, new { CompleteDate = DateTime.Now });
+            }
+        }
+
         task.IsCompleted = !task.IsCompleted;
         if (task.IsCompleted)
             task.CompleteDate = DateTime.Now;

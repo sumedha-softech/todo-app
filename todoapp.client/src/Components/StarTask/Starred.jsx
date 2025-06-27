@@ -20,7 +20,7 @@ const Starred = () => {
     }, []);
 
     return (
-        <div className="row g-4">
+        <div className="row g-4 mb-4">
             {
                 responseError != null ? <div className="text-center text-danger"><h4>{responseError}</h4></div>
                     :

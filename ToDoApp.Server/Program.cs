@@ -19,6 +19,7 @@ builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
 builder.Services.AddScoped<ITaskGroupService, TaskGroupService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ISubTaskService, SubTaskService>();
 
 builder.Services.AddControllers();
 

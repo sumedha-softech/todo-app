@@ -3,9 +3,10 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import { GetTaskById, AddTask, UpdateTask } from '@/api/taskApi';
+import { GetSubTaskById, AddSubTask, UpdateSubTask } from '@/api/subTaskApi';
 import { useTaskEvents } from '../../Hooks/TaskEvents';
 
-const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, isStarredTask }) => {
+const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, isStarredTask, isSubTask, isRequestForSubTaskAdd }) => {
 
     const { RefreshTaskLists, taskGroups } = useTaskEvents();
     const dateRef = useRef(null);
@@ -18,16 +19,23 @@ const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, i
     const [responseError, setResponseError] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
 
-
     useEffect(() => {
         (async () => {
-            if (taskId > 0) {
-                let res = await GetTaskById(taskId);
+            if (taskId > 0 && !isRequestForSubTaskAdd) {
+                let res = {};
+                if (isSubTask && isSubTask === true) {
+                    res = await GetSubTaskById(taskId);
+                } else {
+                    res = await GetTaskById(taskId);
+                }
                 if (res.isSuccess) {
                     let itemToEdit = res.data;
                     setTitle(itemToEdit.title ?? '');
                     setDescription(itemToEdit.description ?? '');
                     setDate(itemToEdit.toDoDate ?? '');
+                } else {
+                    alert(`Error! ${res.message}`);
+                    setVisibility(false);
                 }
             }
         })();
@@ -43,12 +51,21 @@ const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, i
         let response = {};
         const toDoDate = date?.trim() ? date : null;
 
-        if (taskId > 0) {
-            response = await UpdateTask(taskId, { title: title, description: description, toDoDate: toDoDate });
+        if (taskId > 0 && !isRequestForSubTaskAdd) {
+            if (isSubTask && isSubTask === true) {
+                response = await UpdateSubTask(taskId, { title: title, description: description, toDoDate: toDoDate });
+            } else if (groupId > 0) {
+                response = await UpdateTask(taskId, { title: title, description: description, toDoDate: toDoDate });
+            }
         } else {
             const isStarred = isStarredTask === null || isStarredTask === undefined || !isStarredTask ? false : isStarredTask;
             const taskGroupId = groupId > 0 ? groupId : selectedGroupId;
-            response = await AddTask({ title: title, description: description, toDoDate: toDoDate, taskGroupId: taskGroupId, isStarred: isStarred });
+
+            if (isSubTask && isSubTask === true) {
+                response = await AddSubTask({ title: title, description: description, toDoDate: toDoDate, taskId: taskId, isStarred: isStarred });
+            } else {
+                response = await AddTask({ title: title, description: description, toDoDate: toDoDate, taskGroupId: taskGroupId, isStarred: isStarred });
+            }
         }
 
         setDisable(false);
@@ -134,7 +151,7 @@ const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, i
                     </Form.Group>
 
                     {
-                        groupId === 0 && taskId == 0 ?
+                        groupId === 0 && taskId == 0 && !isSubTask ?
 
                             <Form.Group className="mb-3" controlId="exampleForm.ControlInput3">
                                 <Form.Label>Select Task Group</Form.Label>

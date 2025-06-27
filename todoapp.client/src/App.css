@@ -1,6 +1,7 @@
 ﻿::-webkit-scrollbar {
-    position: fixed;
-    width: 7px;
+    position:fixed;
+    width:7px;
+    height:7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -19,6 +20,23 @@
 
 .dropdown-menu .dropdown-item {
     cursor: pointer
+}
+
+.card-body .add-task-button {
+    border-radius: 10px;
+    padding: 2px 0px 4px 5px;
+}
+.contentwrapper {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    cursor: grab
+}
+.contentwrapper:active{
+    cursor:grabbing;
+}
+.card-body .add-task-button:hover {
+    background-color: rgb(224, 224, 224, 0.35);
 }
 
 .card-body .add-task-button {

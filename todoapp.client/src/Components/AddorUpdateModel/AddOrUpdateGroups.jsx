@@ -4,9 +4,10 @@ import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import { AddGroup, UpdateGroup, GetGroupById, GetGroups, GetGroupsTaskList, GetStarredTask } from '@/api/TaskGroupApi';
 import { MoveTaskToNewGroup } from '../../api/TaskApi';
+import { MoveSubTaskToNewGroup } from '../../api/subTaskAPi';
 import { useTaskEvents } from '../../Hooks/TaskEvents';
 
-const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) => {
+const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove, isSubTask }) => {
 
     const { setTaskGroups, setAllGroupTaskList, setallStarredTasks } = useTaskEvents();
     const [disable, setDisable] = useState(false);
@@ -35,7 +36,11 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
         let response = {}
 
         if (taskIdToMove && taskIdToMove != null && taskIdToMove != undefined && taskIdToMove > 0) {
-            response = await MoveTaskToNewGroup(taskIdToMove, { groupName: groupName });
+            if (isSubTask && isSubTask === true) {
+                response = await MoveSubTaskToNewGroup(taskIdToMove, { groupName: groupName });
+            } else {
+                response = await MoveTaskToNewGroup(taskIdToMove, { groupName: groupName });
+            }
             if (!response.isSuccess) {
                 console.error("error while moving task to new group ", response);
                 setResponseError(response.message);
@@ -118,7 +123,7 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove }) =>
     return (
 
         < Modal show={visible} onHide={() => handleClose()} centered size="sm">
-           {/* <Modal.Header closeButton>
+            {/* <Modal.Header closeButton>
                 <Modal.Title>{groupId > 0 ? "Rename Group" : "Add Group"}</Modal.Title>
             </Modal.Header>*/}
             {responseError && <p className=" text-center mt-2 mb-0 text-danger">{responseError}</p>}

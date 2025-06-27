@@ -43,14 +43,19 @@ public interface IBaseRepository<T> where T : class
     /// </summary>
     /// <param name="query"></param>
     /// <returns></returns>
-    Task<IEnumerable<T>> QueryAsync(string sql, params object[] args);
+    Task<IEnumerable<T>> QueryToGetRecordAsync(string sql, params object[] args);
 
     /// <summary>
     /// get result by query asynchronously.
     /// </summary>
-    /// <param name="sql"></param>
-    /// <param name="args"></param>
     /// <returns></returns>
-    IAsyncQueryProviderWithIncludes<T> QueryNewAsync();
+    IAsyncQueryProviderWithIncludes<T> QueryAsync();
 
+    /// <summary>  
+    /// Execute a raw SQL command asynchronously.  
+    /// </summary>  
+    /// <param name="sql">The SQL command to execute.</param>  
+    /// <param name="args">The parameters for the SQL command.</param>  
+    /// <returns>A task representing the asynchronous operation.</returns>  
+    Task ExecuteSqlAsync(string sql, params object[] args);
 }

@@ -34,4 +34,20 @@ BEGIN
         [TaskGroupId] INT NOT NULL
     );
 END
+
+-- Create SubTask table
+IF OBJECT_ID('dbo.[SubTask]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[Task](
+       [SubTaskId] [int] IDENTITY(1,1) NOT NULL,
+		[Title] [nvarchar](max) NOT NULL,
+		[Description] [nvarchar](max) NULL,
+		[ToDoDate] [datetime] NULL,
+        [CreateDate] DATETIME NOT NULL CONSTRAINT DF_Task_CreateDate DEFAULT(GETDATE()),
+        [CompleteDate] [datetime] NULL,
+		[IsStarred] [bit] NOT NULL,
+		[IsCompleted] [bit] NOT NULL,
+		[TaskId] [int] NOT NULL
+    );
+END
 GO

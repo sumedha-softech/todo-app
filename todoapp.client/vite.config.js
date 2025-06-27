@@ -54,11 +54,11 @@ export default defineConfig({
             '^/api/Tasks': {
                 target,
                 secure: false
-            }/*,
-            '^/api/Auth': {
+            },
+            '^/api/SubTasks': {
                 target,
                 secure: false
-            }*/
+            }
         },
         port: 56115,
         https: {

@@ -3,9 +3,9 @@
 This is the main project repository for a modern **ToDo Application**. 
 
 ## 📺 Project Demo
-
-- **Full Project Overview:**  
-  ![TODO Project](./doc/todo-app.gif) 
+  
+  ![TODO Project](./doc/todo-app.gif)
+  
   [Watch Preview](https://raw.githubusercontent.com/sumedha-softech/todo-app/feature/ramlakhan/doc/todo-app.mp4)
 
 ## Project Structure

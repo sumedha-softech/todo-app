@@ -19,18 +19,22 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
 
     public async Task<ResponseModel> GetTaskGroupByIdAsync(int id)
     {
-        ResponseModel response = new();
-        try
+        var taskGroup = await taskGroupRepo.GetByIdAsync(id);
+        if (taskGroup == null)
         {
-            response.Data = await taskGroupRepo.GetByIdAsync(id).ConfigureAwait(false) ?? new();
-            response.IsSuccess = true;
+            return new ResponseModel
+            {
+                IsSuccess = false,
+                Message = "Task Group not found"
+            };
         }
-        catch (Exception ex)
+
+        return new()
         {
-            response.IsSuccess = false;
-            response.Message = ex.Message;
-        }
-        return response;
+            Data = await taskGroupRepo.GetByIdAsync(id) ?? new(),
+            IsSuccess = true
+
+        };
     }
 
     public async Task<ResponseModel> AddGroupAsync(AddGroupRequestModel model)
@@ -67,7 +71,7 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
 
     public async Task<ResponseModel> DeleteGroupAsync(int id)
     {
-        var group = await taskGroupRepo.GetByIdAsync(id).ConfigureAwait(false);
+        var group = await taskGroupRepo.GetByIdAsync(id);
         if (group == null)
         {
             return new ResponseModel

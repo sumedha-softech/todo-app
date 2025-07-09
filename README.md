@@ -1,15 +1,12 @@
 # ToDo Application
 
-This is the main project repository for a modern **ToDo Application**. The project is organized into two main parts:
-
-- **Frontend:** [`todoapp.client`](todoapp.client/README.md) — A React application built with Vite and CoreUI.
-- **Backend:** [`ToDoApp.Server`](ToDoApp.Server/README.md) — An ASP.NET Core Web API backend.
+This is the main project repository for a modern **ToDo Application**. 
 
 ## 📺 Project Demo
 
 - **Full Project Overview:**  
-![TODO Project](./doc/todo-app.gif)
-[Watch Preview](https://raw.githubusercontent.com/sumedha-softech/todo-app/feature/ramlakhan/doc/todo-app.mp4)
+  ![TODO Project](./doc/todo-app.gif) 
+  [Watch Preview](https://raw.githubusercontent.com/sumedha-softech/todo-app/feature/ramlakhan/doc/todo-app.mp4)
 
 ## Project Structure
 

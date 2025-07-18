@@ -72,3 +72,11 @@ export const UpdateSortBy = async (groupId, sortBy) => {
         { method: 'PATCH' });
         return await response.json();
 };
+
+export const UndoDeleteItem = async () => {
+    const response = await fetch(`${BASE_URL}/undoRecentDeleted`, {
+        method: 'PATCH',
+    });
+    return await response.json();
+
+}

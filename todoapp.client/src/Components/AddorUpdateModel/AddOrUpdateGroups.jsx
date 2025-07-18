@@ -9,7 +9,7 @@ import { useTaskEvents } from '../../Hooks/TaskEvents';
 
 const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove, isSubTask }) => {
 
-    const { setTaskGroups, setAllGroupTaskList, setallStarredTasks } = useTaskEvents();
+    const { refreshTaskLists, setRecentActionItem } = useTaskEvents();
     const [disable, setDisable] = useState(false);
     const [isShowError, setIsShowError] = useState(false);
     const [groupName, setGroupName] = useState('');
@@ -30,16 +30,18 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove, isSu
         })();
     }, []);
 
-
     const handleSubmit = async () => {
         setDisable(true);
         let response = {}
-
+        let isTaskMoved = true;
+        let itemToSet = {};
         if (taskIdToMove && taskIdToMove != null && taskIdToMove != undefined && taskIdToMove > 0) {
             if (isSubTask && isSubTask === true) {
                 response = await MoveSubTaskToNewGroup(taskIdToMove, { groupName: groupName });
+                itemToSet = { action: 'move', item: 'sub-task' };
             } else {
                 response = await MoveTaskToNewGroup(taskIdToMove, { groupName: groupName });
+                itemToSet = { action: 'move', item: 'task' };
             }
             if (!response.isSuccess) {
                 console.error("error while moving task to new group ", response);
@@ -48,14 +50,16 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove, isSu
                 return;
             }
 
+            isTaskMoved = response.isSuccess;
+
         } else {
 
+            isTaskMoved = false;
             if (groupId > 0) {
                 response = await UpdateGroup(groupId, { groupName: groupName });
             } else {
                 response = await AddGroup({ groupName: groupName });
             }
-
             if (!response.isSuccess) {
                 if (response?.status === 400 && response?.errors) {
                     setValidationErrors(response?.errors)
@@ -72,7 +76,15 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove, isSu
         setGroupName('');
         response.isSuccess && setVisibility(false);
         setDisable(false);
-        await refreshGroupData();
+        await refreshTaskLists();
+
+        if (isTaskMoved) {
+            setRecentActionItem(itemToSet);
+            // Auto clear after 3 sec
+            setTimeout(() => {
+                setRecentActionItem(null);
+            }, 3000);
+        }
     }
 
     /*handle add list*/
@@ -89,35 +101,6 @@ const AddOrUpdateGroups = ({ visible, setVisibility, groupId, taskIdToMove, isSu
         setVisibility(false);
         setGroupName('');
         setResponseError(null);
-    }
-
-    const refreshGroupData = async () => {
-        const [groupRes, taskRes, starredRes] = await Promise.all([
-            GetGroups(),
-            GetGroupsTaskList(),
-            GetStarredTask()
-        ]);
-
-        if (!groupRes?.isSuccess) {
-            console.error("Group fetch failed:", groupRes?.message || "Unknown error", groupRes?.data);
-            alert(`Error! ${groupRes.message}`);
-        } else {
-            setTaskGroups(groupRes.data);
-        }
-
-        if (!taskRes?.isSuccess) {
-            console.error("Group tasks fetch failed:", taskRes?.message || "Unknown error", taskRes?.data);
-            alert(`Error! ${taskRes.message}`);
-        } else {
-            setAllGroupTaskList(taskRes.data);
-        }
-
-        if (!starredRes?.isSuccess) {
-            console.error("Starred tasks fetch failed:", starredRes?.message || "Unknown error", starredRes?.data);
-            alert(`Error! ${starredRes.message}`);
-        } else {
-            setallStarredTasks(starredRes.data);
-        }
     }
 
     return (

@@ -15,4 +15,5 @@ public class Task
     public bool IsStarred { get; set; }
     public bool IsCompleted { get; set; }
     public int TaskGroupId { get; set; }
+    public bool IsDeleted { get; set; }
 }

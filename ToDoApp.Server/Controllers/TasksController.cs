@@ -1,5 +1,4 @@
-﻿using Azure;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ToDoApp.Server.Contracts;
 using ToDoApp.Server.Models;
 
@@ -7,7 +6,7 @@ namespace ToDoApp.Server.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class TasksController(ITaskService taskService) : ControllerBase
+public class TasksController(ITaskService taskService, ICommonService commonService) : ControllerBase
 {
     #region [Get All Task]
     [HttpGet("")]
@@ -105,5 +104,17 @@ public class TasksController(ITaskService taskService) : ControllerBase
     }
     #endregion [Toggle Complete Task]
 
+    #region [Undo Recent Moved Task]
+    [HttpPatch("undoRecentMovedTask")]
+    public async Task<IActionResult> UndoRecentMovedTask()
+    {
+        var response = await commonService.UndoTaskMoved();
+        if (!response.IsSuccess)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+    #endregion [Undo Moved Task]
 }
 

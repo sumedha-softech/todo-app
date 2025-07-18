@@ -7,37 +7,46 @@ import { DeleteTask, MoveTaskToExistingGroup } from "../../../api/TaskApi";
 import { DeleteSubTask, MoveSubTaskToExistingGroup } from "../../../api/subTaskAPi";
 import { AddOrUpdateGroups, AddOrUpdateTask } from "../../index";
 
-const TaskActions = ({ task, isSubTask, groupId }) => {
-    const { taskGroups, RefreshTaskLists } = useTaskEvents();
+const TaskActions = ({ task, isSubTask, groupId, isStarredDashboard }) => {
+    const { taskGroups, refreshTaskLists, setRecentActionItem } = useTaskEvents();
     const [taskIdForMove, setTaskIdForMove] = useState(0);
     const [visibleTaskModelPopup, setVisibleTaskModelPopup] = useState(false);
     const [visibleGroupModelPopup, setVisibleGroupModelPopup] = useState(false);
 
     // Delete task handler 
-    const handleDeleteTask = async (taskId) => {
+    const handleDeleteTask = async () => {
         let res = {};
-        if (isSubTask) {
-            res = await DeleteSubTask(taskId);
+        if (isSubTask || (task.subTaskId && task.subTaskId > 0)) {
+            res = await DeleteSubTask(task.subTaskId);
         } else {
-            res = await DeleteTask(taskId);
+            res = await DeleteTask(task.taskId);
         }
 
         if (!res.isSuccess) {
             console.error("error while delete task", res);
             return;
         }
+        await refreshTaskLists();
 
-        await RefreshTaskLists();
+        setRecentActionItem({ action: 'delete' });
+
+        // Auto clear after 3 sec
+        setTimeout(() => {
+            setRecentActionItem(false);
+        }, 5000);
     };
 
     // handle move task to anothe created group
-    const handleMoveTask = async (taskId, groupId) => {
+    const handleMoveTask = async (groupId) => {
 
         let res = {};
+        let itemToSet = {};
         if (isSubTask) {
-            res = await MoveSubTaskToExistingGroup(taskId, groupId);
+            res = await MoveSubTaskToExistingGroup(task.subTaskId, groupId);
+            itemToSet = { action: 'move', item: 'sub-task' };
         } else {
-            res = await MoveTaskToExistingGroup(taskId, groupId);
+            res = await MoveTaskToExistingGroup(task.taskId, groupId);
+            itemToSet = { action: 'move', item: 'task' };
         }
         if (!res.isSuccess) {
             console.log("error while moving task to another group ", res);
@@ -45,7 +54,12 @@ const TaskActions = ({ task, isSubTask, groupId }) => {
             return;
         }
 
-        await RefreshTaskLists();
+        await refreshTaskLists();
+        setRecentActionItem(itemToSet);
+        // Auto clear after 3 sec
+        setTimeout(() => {
+            setRecentActionItem(false);
+        }, 3000);
     }
 
     return (
@@ -55,17 +69,17 @@ const TaskActions = ({ task, isSubTask, groupId }) => {
                     <CIcon icon={cilOptions} />
                 </CDropdownToggle>
                 <CDropdownMenu>
-                    {!isSubTask &&
+                    {!isSubTask && !isStarredDashboard &&
                         <CDropdownItem onClick={() => setVisibleTaskModelPopup(true)}>
                             <CIcon icon={cilListLowPriority} /> Add sub Task</CDropdownItem>
                     }
-                    <CDropdownItem onClick={() => handleDeleteTask(!isSubTask ? task.taskId : task.subTaskId)}> <CIcon icon={cilTrash} /> Delete</CDropdownItem>
+                    <CDropdownItem onClick={() => handleDeleteTask()}> <CIcon icon={cilTrash} /> Delete</CDropdownItem>
                     <CDropdownDivider />
 
                     <CDropdownItem disabled><strong>My Task</strong></CDropdownItem>
                     {taskGroups &&
                         taskGroups.map(groupItem => (
-                            <CDropdownItem key={groupItem.groupId} onClick={() => handleMoveTask(!isSubTask ? task.taskId : task.subTaskId, groupItem.groupId)}>
+                            <CDropdownItem key={groupItem.groupId} onClick={() => handleMoveTask(groupItem.groupId)}>
                                 {groupId === groupItem.groupId ? <strong>{groupItem.groupName} </strong> : groupItem.groupName}
                             </CDropdownItem>
                         ))

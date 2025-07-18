@@ -66,4 +66,11 @@ export const MoveTaskToNewGroup = async (taskId, groupItem) => {
     return await response.json();
 };
 
+export const UndoRecentMovedTask = async () => {
+    const response = await fetch(`${BASE_URL}/undoRecentMovedTask`, {
+        method: 'PATCH',
+    });
+    return await response.json();
+};
+
 

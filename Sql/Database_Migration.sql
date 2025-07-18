@@ -14,8 +14,11 @@ BEGIN
         [GroupId] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
         [GroupName] NVARCHAR(100) NULL,
         [IsEnableShow] BIT NOT NULL CONSTRAINT DF_Group_IsEnableShow DEFAULT(1),
-        [SortBy] NVARCHAR(50) NOT NULL CONSTRAINT DF_Group_SortBy DEFAULT('My order')
+        [SortBy] NVARCHAR(50) NOT NULL CONSTRAINT DF_Group_SortBy DEFAULT('My order'),
+		[IsDeleted] [bit] NOT NULL
     );
+
+	Insert into [Group] Values('MyTask',1,'My order', 0)
 END
 GO
 
@@ -31,23 +34,25 @@ BEGIN
         [CompleteDate] DATETIME NULL,
         [IsStarred] BIT NOT NULL,
         [IsCompleted] BIT NOT NULL,
-        [TaskGroupId] INT NOT NULL
+        [TaskGroupId] INT NOT NULL,
+		[IsDeleted] [bit] NOT NULL
     );
 END
 
 -- Create SubTask table
 IF OBJECT_ID('dbo.[SubTask]', 'U') IS NULL
 BEGIN
-    CREATE TABLE [dbo].[Task](
+    CREATE TABLE [dbo].[SubTask](
        [SubTaskId] [int] IDENTITY(1,1) NOT NULL,
 		[Title] [nvarchar](max) NOT NULL,
 		[Description] [nvarchar](max) NULL,
 		[ToDoDate] [datetime] NULL,
-        [CreateDate] DATETIME NOT NULL CONSTRAINT DF_Task_CreateDate DEFAULT(GETDATE()),
+        [CreateDate] DATETIME NOT NULL CONSTRAINT DF_SubTask_CreateDate DEFAULT(GETDATE()),
         [CompleteDate] [datetime] NULL,
 		[IsStarred] [bit] NOT NULL,
 		[IsCompleted] [bit] NOT NULL,
-		[TaskId] [int] NOT NULL
+		[TaskId] [int] NOT NULL,
+		[IsDeleted] [bit] NOT NULL
     );
 END
 GO

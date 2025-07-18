@@ -8,7 +8,7 @@ import { useTaskEvents } from '../../Hooks/TaskEvents';
 
 const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, isStarredTask, isSubTask, isRequestForSubTaskAdd }) => {
 
-    const { RefreshTaskLists, taskGroups } = useTaskEvents();
+    const { refreshTaskLists, taskGroups } = useTaskEvents();
     const dateRef = useRef(null);
     const [disable, setDisable] = useState(false);
     const [title, setTitle] = useState('');
@@ -83,7 +83,7 @@ const AddOrUpdateTask = ({ visible, setVisibility, taskId, setTaskId, groupId, i
         setSelectedGroupId(1);
         EmptyAllFields();
         response.isSuccess && setVisibility(false);
-        await RefreshTaskLists();
+        await refreshTaskLists();
     }
 
     const EmptyAllFields = () => {

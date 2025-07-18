@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ToDoApp.Server.Contracts;
 using ToDoApp.Server.Models;
-using ToDoApp.Server.Services;
 
 namespace ToDoApp.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SubTasksController(ISubTaskService subTasksService) : ControllerBase
+    public class SubTasksController(ISubTaskService subTasksService, ICommonService commonService) : ControllerBase
     {
         #region [Get All Sub Task]
         [HttpGet("")]
@@ -112,5 +111,18 @@ namespace ToDoApp.Server.Controllers
             return Ok(response);
         }
         #endregion [Toggle Complete Task]
+
+        #region [Undo Recent Moved Sub Task]
+        [HttpPatch("undoRecentMovedSubTask")]
+        public async Task<IActionResult> UndoRecentMovedSubTask()
+        {
+            var response = await commonService.UndoSubTaskMoved();
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+        #endregion [Undo Moved Sub Task]
     }
 }

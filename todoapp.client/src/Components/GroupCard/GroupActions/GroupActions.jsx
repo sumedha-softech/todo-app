@@ -8,7 +8,7 @@ import { AddOrUpdateGroups } from '../../index';
 
 const GroupActions = ({ group, isStarredList }) => {
     const orderList = ["My order", "Date", "Title", "Description"];
-    const { RefreshTaskLists, setAllGroupTaskList, allGroupTaskList, setTaskGroups, taskGroups } = useTaskEvents();
+    const { refreshTaskLists, setAllGroupTaskList, allGroupTaskList, setTaskGroups, taskGroups, setRecentActionItem } = useTaskEvents();
     const [visibleModel, setVisibleModel] = useState(false);
     const [groupId, setGroupId] = useState(0);
 
@@ -20,7 +20,7 @@ const GroupActions = ({ group, isStarredList }) => {
             return;
         }
 
-        await RefreshTaskLists();
+        await refreshTaskLists();
 
     };
 
@@ -41,6 +41,13 @@ const GroupActions = ({ group, isStarredList }) => {
         setAllGroupTaskList(updatedGroupTaskList);
         const updatedTaskGroups = taskGroups.filter(group => group.groupId !== groupId);
         setTaskGroups(updatedTaskGroups);
+
+        setRecentActionItem({action:'delete'});
+
+        // Auto clear after 5 sec
+        setTimeout(() => {
+            setRecentActionItem(false);
+        }, 5000);
     };
 
     const handleDeleteCompletedTask = async (groupId) => {

@@ -57,6 +57,7 @@ const GroupActions = ({ group, isStarredList }) => {
             const res = await DeleteCompletedTask(groupId);
             if (!res.isSuccess) {
                 console.error("error while delete group", res);
+                alert(res.message);
                 return;
             }
 

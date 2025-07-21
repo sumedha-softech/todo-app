@@ -198,21 +198,36 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
 
     public async Task<ResponseModel> DeleteCompletedTaskAsync(int groupId)
     {
-        var completedTasks = await taskRepo.QueryToGetRecordAsync("Select * from Task where TaskGroupId =@0 and IsCompleted =1 and IsDeleted =0", groupId).ConfigureAwait(false);
-        if (completedTasks != null && completedTasks.Count() > 0)
+        var groupTaskList = await taskRepo.QueryAsync()?.Where(x => x.TaskGroupId == groupId && !x.IsDeleted)?.ToList();
+        if (groupTaskList == null || groupTaskList.Count() == 0)
         {
-            var completedTaskIds = completedTasks.Select(x => x.TaskId).ToList();
-            // Delete all subtasks associated with the completed tasks in this group
-            var subTasks = await subTaskRepo.QueryAsync().Where(x => completedTaskIds.Contains(x.TaskId) && !x.IsDeleted).ToList();
-            if (subTasks.Any())
+            return new ResponseModel
             {
-                var subTaskIds = string.Join(",", subTasks.Select(x => x.SubTaskId));
+                IsSuccess = false,
+                Message = "No completed tasks found in this group"
+            };
+        }
+
+        var completedTasks = groupTaskList.Where(x => x.IsCompleted).ToList();
+        var parentTaskIds = groupTaskList.Select(x => x.TaskId).ToList();
+
+        var completedSubTasks = await subTaskRepo.QueryToGetRecordAsync($"Select * from SubTask where TaskId IN ({string.Join(",", parentTaskIds)}) and IsCompleted =1 and IsDeleted =0").ConfigureAwait(false);
+
+        if ((completedTasks != null && completedTasks.Count() > 0) || (completedSubTasks != null && completedSubTasks.Count() > 0))
+        {
+            // Delete all Completed subtasks associated with the tasks in this group
+            if (completedSubTasks.Any())
+            {
+                var subTaskIds = string.Join(",", completedSubTasks.Select(x => x.SubTaskId));
                 await subTaskRepo.ExecuteSqlAsync($"UPDATE SubTask SET IsDeleted = 1 WHERE SubTaskId IN ({subTaskIds})");
             }
 
             // Delete all completed tasks associated with this group
-            var taskIdsForDelete = string.Join(",", completedTaskIds);
-            await taskRepo.ExecuteSqlAsync($"UPDATE Task SET IsDeleted = 1 WHERE TaskId IN ({taskIdsForDelete})");
+            if (completedTasks.Any())
+            {
+                var taskIdsForDelete = string.Join(",", completedTasks.Select(x => x.TaskId));
+                await taskRepo.ExecuteSqlAsync($"UPDATE Task SET IsDeleted = 1 WHERE TaskId IN ({taskIdsForDelete})");
+            }
         }
 
         return new()

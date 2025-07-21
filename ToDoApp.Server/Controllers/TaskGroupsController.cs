@@ -5,7 +5,7 @@ using ToDoApp.Server.Models;
 namespace ToDoApp.Server.Controllers;
 [ApiController]
 [Route("api/[controller]")]
-public class TaskGroupsController(ITaskGroupService taskGroupService,ICommonService commonService) : ControllerBase
+public class TaskGroupsController(ITaskGroupService taskGroupService, ICommonService commonService) : ControllerBase
 {
     #region [Get Task Group List]
     [HttpGet("")]
@@ -57,9 +57,8 @@ public class TaskGroupsController(ITaskGroupService taskGroupService,ICommonServ
     {
         var result = await taskGroupService.DeleteGroupAsync(id);
         if (!result.IsSuccess)
-        {
             return BadRequest(result);
-        }
+
         return Ok(result);
     }
     #endregion [Delete Task Group]
@@ -72,7 +71,14 @@ public class TaskGroupsController(ITaskGroupService taskGroupService,ICommonServ
 
     #region [Delete Completed Task]
     [HttpDelete("{id}/complete")]
-    public async Task<IActionResult> DeleteCompletedTask(int id) => Ok(await taskGroupService.DeleteCompletedTaskAsync(id));
+    public async Task<IActionResult> DeleteCompletedTask(int id)
+    {
+        var result = await taskGroupService.DeleteCompletedTaskAsync(id);
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
     #endregion [Delete Completed Task]
 
     #region [Get All Starred Task]
@@ -121,6 +127,6 @@ public class TaskGroupsController(ITaskGroupService taskGroupService,ICommonServ
 
 
 
-   
+
 }
 

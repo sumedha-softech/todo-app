@@ -40,7 +40,7 @@ const GroupCard = ({ group, isStarredList }) => {
                 <GroupCardHeader group={group} isStarredList={isStarredList} />
                 {/*add this css on CCardBody for add scroll*/}
                 {/*style={{ minHeight: "100px", maxHeight: "720px", overflowX: "auto" }}*/}
-                <CCardBody style={{ minHeight: "100px", maxHeight: "720px", overflowX: "auto" }}>
+                <CCardBody>
                     <AddTaskButton groupId={group.groupId} isStarredTask={isStarredList} />
                     {
                         group.taskList && group.taskList.length > 0

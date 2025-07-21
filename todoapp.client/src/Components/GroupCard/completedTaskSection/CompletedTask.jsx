@@ -9,7 +9,7 @@ import { CListGroupItem } from '@coreui/react';
 import { AddOrUpdateTask } from "../../index";
 
 const CompletedTask = ({ groupId, task, onComplete }) => {
-    const { RefreshTaskLists } = useTaskEvents();
+    const { refreshTaskLists, setRecentActionItem } = useTaskEvents();
     const [editTaskId, setEditTaskId] = useState(0);
     const [visibleModel, setVisibleModel] = useState(false);
 
@@ -33,7 +33,12 @@ const CompletedTask = ({ groupId, task, onComplete }) => {
             return;
         }
 
-        await RefreshTaskLists();
+        await refreshTaskLists();
+        setRecentActionItem({action:'delete'});
+
+        setTimeout(() => {
+            setRecentActionItem(null);
+        },5000)
     };
 
     return (

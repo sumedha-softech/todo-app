@@ -16,7 +16,8 @@ builder.Services.AddScoped<IDatabase>(provider =>
 });
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-
+builder.Services.AddSingleton<ICacheService, CacheService>();
+builder.Services.AddScoped<ICommonService, CommonService>();
 builder.Services.AddScoped<ITaskGroupService, TaskGroupService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ISubTaskService, SubTaskService>();
@@ -26,7 +27,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle  
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 var app = builder.Build();
 
 app.UseDefaultFiles();

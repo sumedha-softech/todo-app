@@ -6,7 +6,7 @@ This is the main project repository for a modern **ToDo Application**.
   
   ![TODO Project](./doc/todo-app.gif)
   
-  [Watch Preview](https://raw.githubusercontent.com/sumedha-softech/todo-app/feature/ramlakhan/doc/todo-app.mp4)
+  [Watch Preview](https://raw.githubusercontent.com/sumedha-softech/todo-app/main/doc/todo-app.mp4)
 
 ## Project Structure
 
@@ -64,6 +64,14 @@ ToDoApp/
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) (v18+ recommended)
 - [npm](https://www.npmjs.com/)
+
+## Database Setup
+
+The backend requires a SQL database. You can generate the necessary database and tables using the provided SQL script.
+
+- **SQL Script:** See [`./Sql/Database_Migration.sql`](./Sql/Database_Migration.sql) for database and table creation queries.
+
+> Ensure you run this script on your SQL Server instance before starting the backend API.
 
 ### Setup
 

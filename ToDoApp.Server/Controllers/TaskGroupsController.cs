@@ -1,12 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ToDoApp.Server.Contracts;
 using ToDoApp.Server.Models;
 
 namespace ToDoApp.Server.Controllers;
 [ApiController]
 [Route("api/[controller]")]
-public class TaskGroupsController(ITaskGroupService taskGroupService) : ControllerBase
+public class TaskGroupsController(ITaskGroupService taskGroupService,ICommonService commonService) : ControllerBase
 {
     #region [Get Task Group List]
     [HttpGet("")]
@@ -21,19 +20,32 @@ public class TaskGroupsController(ITaskGroupService taskGroupService) : Controll
 
     #region [Add Task Group]
     [HttpPost("")]
-    public async Task<IActionResult> Post([FromBody] AddGroupRequestModel model) => Ok(await taskGroupService.AddGroupAsync(model));
+    public async Task<IActionResult> Post([FromBody] AddGroupRequestModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
 
+        return Ok(await taskGroupService.AddGroupAsync(model));
+    }
     #endregion [Add Task Group]
 
     #region [Edit Task Group]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, [FromBody] UpdateGroupRequestModel model)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var response = await taskGroupService.UpdateGroupAsync(id, model);
         if (!response.IsSuccess)
         {
             return BadRequest(response);
         }
+
         return Ok(response);
     }
 
@@ -43,7 +55,7 @@ public class TaskGroupsController(ITaskGroupService taskGroupService) : Controll
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-       var result= await taskGroupService.DeleteGroupAsync(id);
+        var result = await taskGroupService.DeleteGroupAsync(id);
         if (!result.IsSuccess)
         {
             return BadRequest(result);
@@ -65,7 +77,7 @@ public class TaskGroupsController(ITaskGroupService taskGroupService) : Controll
 
     #region [Get All Starred Task]
     [HttpGet("tasks/star")]
-    public async Task<IActionResult> GetAllStarredTask()=> Ok(await taskGroupService.GetStarredTaskAsync());
+    public async Task<IActionResult> GetAllStarredTask() => Ok(await taskGroupService.GetStarredTaskAsync());
     #endregion [Get All Starred Task]
 
     #region [Update Task Group Visibility]
@@ -93,5 +105,22 @@ public class TaskGroupsController(ITaskGroupService taskGroupService) : Controll
         return Ok(response);
     }
     #endregion [Update SortBy]
+
+    #region [Undo Task SubTask And Group]
+    [HttpPatch("undoRecentDeleted")]
+    public async Task<IActionResult> UndoTaskSubTaskAndGroup()
+    {
+        var response = await commonService.UndoDeleteItems();
+        if (!response.IsSuccess)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+    #endregion [Undo Task SubTask And Group]
+
+
+
+   
 }
 

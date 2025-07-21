@@ -12,7 +12,7 @@ import {
 import { CCard, CCardBody, CListGroup } from '@coreui/react'
 
 const GroupCard = ({ group, isStarredList }) => {
-    const { RefreshTaskLists } = useTaskEvents();
+    const { refreshTaskLists } = useTaskEvents();
 
     // mark complete or uncomplete a task
     const handleCompleteTask = async (taskId, isSubTask) => {
@@ -30,38 +30,35 @@ const GroupCard = ({ group, isStarredList }) => {
             return;
         }
 
-        await RefreshTaskLists();
+        await refreshTaskLists();
     };
 
     return (
         group.isEnableShow &&
         <div className={`col-md-4 ${isStarredList ? 'm-auto mt-4' : ''}`}>
-            <CCard className="shadow-sm rounded-3">
-                    <GroupCardHeader group={group} isStarredList={isStarredList} />
-                    {/*add this css on CCardBody for add scroll*/}
-                    {/*style={{ minHeight: "100px", maxHeight: "720px", overflowX: "auto" }}*/}
-                    <CCardBody>
+            <CCard className="shadow-sm rounded-3" style={{ overflow: 'visible !important' }}>
+                <GroupCardHeader group={group} isStarredList={isStarredList} />
+                {/*add this css on CCardBody for add scroll*/}
+                {/*style={{ minHeight: "100px", maxHeight: "720px", overflowX: "auto" }}*/}
+                <CCardBody style={{ minHeight: "100px", maxHeight: "720px", overflowX: "auto" }}>
                     <AddTaskButton groupId={group.groupId} isStarredTask={isStarredList} />
                     {
                         group.taskList && group.taskList.length > 0
-                            ? <CListGroup flush>
-                                {
-                                    group.taskList.map(task => (
-                                        <InCompleteTasks key={task.taskId} groupId={group.groupId} task={task} onComplete={handleCompleteTask} />
-                                    ))
-                                }</CListGroup>
+                            ? <CListGroup flush>{
+                                group.taskList.map(task => (
+                                    <InCompleteTasks key={task.taskId} groupId={group.groupId} task={task} onComplete={handleCompleteTask} isStarredList={isStarredList} />
+                                ))}
+                            </CListGroup>
 
                             : group.completedTaskList && group.completedTaskList.length > 0 ? <TaskCompletedMessage /> : <NoTaskYetMessage />
                     }
                     {
                         group.completedTaskList && group.completedTaskList.length > 0 &&
-                        <>
-                            <CompletedTaskList groupId={group.groupId} completedTaskList={group.completedTaskList} onComplete={handleCompleteTask} />
-                        </>
+                        <CompletedTaskList groupId={group.groupId} completedTaskList={group.completedTaskList} onComplete={handleCompleteTask} />
                     }
                 </CCardBody>
             </CCard>
-        </div >
+        </div>
     )
 }
 

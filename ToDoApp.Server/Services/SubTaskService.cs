@@ -1,5 +1,5 @@
-﻿using Microsoft.VisualBasic;
-using ToDoApp.Server.Contracts;
+﻿using ToDoApp.Server.Contracts;
+using ToDoApp.Server.Helper;
 using ToDoApp.Server.Models;
 using ToDoApp.Server.Models.Entity;
 
@@ -8,6 +8,7 @@ namespace ToDoApp.Server.Services
     public class SubTaskService(
         IBaseRepository<SubTask> subTaskRepo,
         IBaseRepository<Models.Entity.Task> taskRepo,
+        ICacheService cacheService,
         IBaseRepository<TaskGroup> taskGroupRepo) : ISubTaskService
     {
         public async Task<ResponseModel> AddSubTaskAsync(AddSubTaskRequestModel model)
@@ -32,8 +33,9 @@ namespace ToDoApp.Server.Services
 
         public async Task<ResponseModel> DeleteAsync(int subTaskId)
         {
+            var cacheModel = new UndoDeleteItemCacheModel();
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -42,7 +44,10 @@ namespace ToDoApp.Server.Services
                 };
             }
 
-            await subTaskRepo.DeleteAsync(subTaskId);
+            subTask.IsDeleted = true;
+            await subTaskRepo.UpdateAsync(subTask);
+            cacheModel.SubTasksId = [subTaskId];
+            cacheService.SetData(ConstantVariables.CacheKeyForUndoItems, cacheModel, DateTimeOffset.Now.AddSeconds(3));
             return new()
             {
                 IsSuccess = true,
@@ -54,7 +59,7 @@ namespace ToDoApp.Server.Services
         {
             return new()
             {
-                Data = await subTaskRepo.GetAllAsync(),
+                Data = await subTaskRepo.QueryAsync().Where(x => !x.IsDeleted).ToList(),
                 IsSuccess = true,
             };
         }
@@ -62,7 +67,7 @@ namespace ToDoApp.Server.Services
         public async Task<ResponseModel> GetSubTaskByIdAsync(int subTaskId)
         {
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -86,9 +91,10 @@ namespace ToDoApp.Server.Services
 
         public async Task<ResponseModel> MoveSubTaskToExistingGroupAsync(int subTaskId, int groupId)
         {
+            var cacheModel = new UndoSubTaskMovedCacheModel();
             // Check if the subtask exists
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -97,8 +103,8 @@ namespace ToDoApp.Server.Services
                 };
             }
             // Check if the group exists
-            var group = await taskRepo.GetByIdAsync(groupId);
-            if (group == null)
+            var group = await taskGroupRepo.GetByIdAsync(groupId);
+            if (group == null || group.IsDeleted)
             {
                 return new()
                 {
@@ -107,7 +113,7 @@ namespace ToDoApp.Server.Services
                 };
             }
             // Move the subtask to a group
-            await taskRepo.AddAsync(new Models.Entity.Task()
+            var taskToAdd = new Models.Entity.Task()
             {
                 Title = subTask.Title,
                 Description = subTask.Description,
@@ -116,10 +122,16 @@ namespace ToDoApp.Server.Services
                 IsCompleted = subTask.IsCompleted,
                 TaskGroupId = groupId,
                 CreateDate = DateTime.Now
-            });
-
+            };
+            await taskRepo.AddAsync(taskToAdd);
+            cacheModel.TaskId = taskToAdd.TaskId;
+            cacheModel.SubTaskId = subTaskId;
+            cacheModel.MovedGroupId = groupId;
+            cacheModel.IsExistedGroup = true;
             // Delete the subtask from the subtask list
-            await subTaskRepo.DeleteAsync(subTaskId);
+            subTask.IsDeleted = true;
+            await subTaskRepo.UpdateAsync(subTask);
+            cacheService.SetData(ConstantVariables.CacheKeyForUndoSubTaskMoved, cacheModel, DateTimeOffset.Now.AddSeconds(3));
             return new()
             {
                 IsSuccess = true,
@@ -129,9 +141,10 @@ namespace ToDoApp.Server.Services
 
         public async Task<ResponseModel> MoveSubTaskToNewGroup(int subTaskId, AddGroupRequestModel model)
         {
+            var cacheModel = new UndoSubTaskMovedCacheModel();
             //check if the subtask exists
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -143,7 +156,7 @@ namespace ToDoApp.Server.Services
             var group = new TaskGroup { GroupName = model.GroupName, IsEnableShow = true, SortBy = "My order" };
             await taskGroupRepo.AddAsync(group);
 
-            await taskRepo.AddAsync(new Models.Entity.Task()
+            var taskToAdd = new Models.Entity.Task()
             {
                 Title = subTask.Title,
                 Description = subTask.Description,
@@ -152,11 +165,17 @@ namespace ToDoApp.Server.Services
                 IsCompleted = subTask.IsCompleted,
                 TaskGroupId = group.GroupId, // Assign the new group ID
                 CreateDate = DateTime.Now
-            });
+            };
+            await taskRepo.AddAsync(taskToAdd);
 
             // Delete sub task from the subtask list
-            await subTaskRepo.DeleteAsync(subTaskId);
-
+            subTask.IsDeleted = true;
+            await subTaskRepo.UpdateAsync(subTask);
+            cacheModel.TaskId = taskToAdd.TaskId;
+            cacheModel.SubTaskId = subTaskId;
+            cacheModel.IsExistedGroup = false;
+            cacheModel.MovedGroupId = group.GroupId;
+            cacheService.SetData(ConstantVariables.CacheKeyForUndoSubTaskMoved, cacheModel, DateTimeOffset.Now.AddSeconds(3));
             return new()
             {
                 IsSuccess = true,
@@ -167,7 +186,7 @@ namespace ToDoApp.Server.Services
         public async Task<ResponseModel> ToggleStarSubTaskAsync(int subTaskId)
         {
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -188,7 +207,7 @@ namespace ToDoApp.Server.Services
         public async Task<ResponseModel> UpdateSubTaskAsync(int subTaskId, UpdateTaskRequestModel model)
         {
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -215,7 +234,7 @@ namespace ToDoApp.Server.Services
         public async Task<ResponseModel> UpdateSubTaskCompletionStatusAsync(int subTaskId)
         {
             var subTask = await subTaskRepo.GetByIdAsync(subTaskId);
-            if (subTask == null)
+            if (subTask == null || subTask.IsDeleted)
             {
                 return new()
                 {
@@ -225,7 +244,7 @@ namespace ToDoApp.Server.Services
             }
 
             var task = await taskRepo.GetByIdAsync(subTask.TaskId);
-            if (task == null)
+            if (task == null || task.IsDeleted)
             {
                 return new()
                 {

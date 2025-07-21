@@ -74,7 +74,16 @@ const SidebarGroups = () => {
                                 <CIcon
                                     icon={item.isEnableShow ? cilTask : cilSquare}
                                     customClassName="nav-icon" />
-                                {item.groupName}
+                                <span title={item.groupName} style={{
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    maxWidth: '130px',
+                                    display: 'inline-block',
+                                    verticalAlign: 'middle'
+                                }}>
+                                    {item.groupName}
+                                </span>
                                 <CBadge color="secondary" className="ms-auto" size="sm">
                                     {countTask(item.groupId)}
                                 </CBadge>

@@ -1,26 +1,9 @@
 import React, { useEffect, useRef,useContext } from 'react'
 import { Context } from '../../global/MyContext';
 
-import {
-    CContainer,
-    CDropdown,
-    CDropdownItem,
-    CDropdownMenu,
-    CDropdownToggle,
-    CHeader,
-    CHeaderNav,
-    CHeaderToggler,
-    CNavItem,
-    useColorModes,
-    CFormInput
-} from '@coreui/react'
+import { CContainer, CDropdown, CDropdownItem, CDropdownMenu, CDropdownToggle, CHeader, CHeaderNav, CHeaderToggler, CNavItem, useColorModes, CFormInput } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import {
-    cilContrast,
-    cilMenu,
-    cilMoon,
-    cilSun,
-} from '@coreui/icons'
+import {cilContrast,cilMenu,cilMoon,cilSun,} from '@coreui/icons'
 
 const AppHeader = () => {
     const { sidebarShow, setSidebarShow, setSearchTerm } = useContext(Context);

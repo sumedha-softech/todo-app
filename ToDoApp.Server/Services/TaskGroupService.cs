@@ -1,18 +1,17 @@
-﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
-using ToDoApp.Server.Contracts;
+﻿using ToDoApp.Server.Contracts;
+using ToDoApp.Server.Helper;
 using ToDoApp.Server.Models;
 using ToDoApp.Server.Models.Entity;
 
 namespace ToDoApp.Server.Services;
 
-public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepository<SubTask> subTaskRepo) : ITaskGroupService
+public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRepository<Models.Entity.Task> taskRepo, IBaseRepository<SubTask> subTaskRepo, ICacheService cacheService) : ITaskGroupService
 {
     public async Task<ResponseModel> GetTaskGroupsAsync()
     {
         return new()
         {
-            Data = await taskGroupRepo.GetAllAsync().ConfigureAwait(false),
+            Data = await taskGroupRepo.QueryAsync().Where(x => !x.IsDeleted).ToList(),
             IsSuccess = true
         };
     }
@@ -20,7 +19,7 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
     public async Task<ResponseModel> GetTaskGroupByIdAsync(int id)
     {
         var taskGroup = await taskGroupRepo.GetByIdAsync(id);
-        if (taskGroup == null)
+        if (taskGroup == null || taskGroup.IsDeleted)
         {
             return new ResponseModel
             {
@@ -31,7 +30,7 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
 
         return new()
         {
-            Data = await taskGroupRepo.GetByIdAsync(id) ?? new(),
+            Data = taskGroup,
             IsSuccess = true
 
         };
@@ -51,7 +50,7 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
     {
         var group = await taskGroupRepo.GetByIdAsync(id).ConfigureAwait(false);
 
-        if (group == null)
+        if (group == null || group.IsDeleted)
         {
             return new ResponseModel
             {
@@ -62,17 +61,20 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
 
         group.GroupName = model.GroupName;
         await taskGroupRepo.UpdateAsync(group);
+
         return new ResponseModel
         {
             IsSuccess = true,
             Message = "Task Group updated successfully"
-        }; ;
+        };
     }
 
     public async Task<ResponseModel> DeleteGroupAsync(int id)
     {
+        var cacheModel = new UndoDeleteItemCacheModel();
+
         var group = await taskGroupRepo.GetByIdAsync(id);
-        if (group == null)
+        if (group == null || group.IsDeleted)
         {
             return new ResponseModel
             {
@@ -81,34 +83,42 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
             };
         }
 
-        var tasks = await taskRepo.QueryAsync().Where(x => x.TaskGroupId == id).ToList();
+        cacheModel.ItemType = "Group";
+        cacheModel.GroupId = id;
+
+        var tasks = await taskRepo.QueryAsync().Where(x => x.TaskGroupId == id && !x.IsDeleted).ToList();
 
         if (tasks.Any())
         {
             var taskIds = tasks.Select(x => x.TaskId).ToList();
+
             // Delete all subtasks associated with the tasks in this group
-            var subTasks = await subTaskRepo.QueryAsync().Where(x => taskIds.Contains(x.TaskId)).ToList();
+            var subTasks = await subTaskRepo.QueryAsync().Where(x => taskIds.Contains(x.TaskId) && !x.IsDeleted).ToList();
             if (subTasks.Any())
             {
-                var subTaskIds = string.Join(",", subTasks.Select(x => x.SubTaskId).ToList());
-                await subTaskRepo.ExecuteSqlAsync($"DELETE FROM SubTask WHERE SubTaskId IN ({subTaskIds})");
+                var subTaskIds = subTasks.Select(x => x.SubTaskId).ToList();
+                await subTaskRepo.ExecuteSqlAsync($"UPDATE SubTask SET IsDeleted = 1 WHERE SubTaskId IN ({string.Join(",", subTaskIds)})");
+                cacheModel.SubTasksId = subTaskIds;
             }
 
             // Delete all tasks associated with this group
             var taskIdsForDelete = string.Join(",", taskIds);
-            await taskRepo.ExecuteSqlAsync($"DELETE FROM Task WHERE TaskId IN ({taskIdsForDelete})");
+            await taskRepo.ExecuteSqlAsync($"UPDATE Task SET IsDeleted = 1 WHERE TaskId IN ({taskIdsForDelete})");
+            cacheModel.TasksId = taskIds;
         }
 
-        await taskGroupRepo.DeleteAsync(id);
+        group.IsDeleted = true;
+        await taskGroupRepo.UpdateAsync(group);
+        cacheService.SetData(ConstantVariables.CacheKeyForUndoItems, cacheModel, DateTimeOffset.Now.AddSeconds(3));
         return new() { IsSuccess = true, Message = "Task Group deleted successfully" };
     }
 
     public async Task<ResponseModel> GetAllGroupWithTaskListAsync()
     {
         ResponseModel response = new();
-        var taskList = await taskRepo.GetAllAsync();
-        var subTaskList = await subTaskRepo.GetAllAsync();
-        response.Data = taskGroupRepo.GetAllAsync().Result.Select(group => new GroupTaskListVM
+        var taskList = await taskRepo.QueryAsync().Where(x => !x.IsDeleted).ToList();
+        var subTaskList = await subTaskRepo.QueryAsync().Where(x => !x.IsDeleted).ToList();
+        response.Data = taskGroupRepo.QueryAsync().Where(x => !x.IsDeleted).ToList().Result.Select(group => new GroupTaskListVM
         {
             GroupId = group.GroupId,
             GroupName = group.GroupName,
@@ -188,21 +198,21 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
 
     public async Task<ResponseModel> DeleteCompletedTaskAsync(int groupId)
     {
-        var completedTasks = await taskRepo.QueryToGetRecordAsync("Select * from Task where TaskGroupId =@0 and IsCompleted =1", groupId).ConfigureAwait(false);
+        var completedTasks = await taskRepo.QueryToGetRecordAsync("Select * from Task where TaskGroupId =@0 and IsCompleted =1 and IsDeleted =0", groupId).ConfigureAwait(false);
         if (completedTasks != null && completedTasks.Count() > 0)
         {
             var completedTaskIds = completedTasks.Select(x => x.TaskId).ToList();
             // Delete all subtasks associated with the completed tasks in this group
-            var subTasks = await subTaskRepo.QueryAsync().Where(x => completedTaskIds.Contains(x.TaskId)).ToList();
+            var subTasks = await subTaskRepo.QueryAsync().Where(x => completedTaskIds.Contains(x.TaskId) && !x.IsDeleted).ToList();
             if (subTasks.Any())
             {
                 var subTaskIds = string.Join(",", subTasks.Select(x => x.SubTaskId));
-                await subTaskRepo.ExecuteSqlAsync($"DELETE FROM SubTask WHERE SubTaskId IN ({subTaskIds})");
+                await subTaskRepo.ExecuteSqlAsync($"UPDATE SubTask SET IsDeleted = 1 WHERE SubTaskId IN ({subTaskIds})");
             }
 
             // Delete all completed tasks associated with this group
             var taskIdsForDelete = string.Join(",", completedTaskIds);
-            await taskRepo.ExecuteSqlAsync($"DELETE FROM Task WHERE TaskId IN ({taskIdsForDelete})");
+            await taskRepo.ExecuteSqlAsync($"UPDATE Task SET IsDeleted = 1 WHERE TaskId IN ({taskIdsForDelete})");
         }
 
         return new()
@@ -216,41 +226,66 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
     {
         ResponseModel response = new();
         var group = await taskGroupRepo.GetByIdAsync(1);
-        var subTaskList = await subTaskRepo.QueryAsync().ToList();
-        response.Data = new GroupTaskListVM
-        {
-            GroupId = group.GroupId,
-            GroupName = "Starred tasks",
-            SortBy = group.SortBy ?? "My order",
-            isEnableShow = true,
+        if (group == null)
+            return new ResponseModel { IsSuccess = true, Message = "No Record Found." };
+        var tasks = await taskRepo?.QueryAsync()?.Where(x => !x.IsDeleted && x.IsStarred && !x.IsCompleted)?.ToList();
+        var subTasks = await subTaskRepo?.QueryAsync()?.Where(x => !x.IsDeleted && x.IsStarred && !x.IsCompleted)?.ToList();
 
-            TaskList = taskRepo.GetAllAsync().Result.Where(x => x.IsStarred && !x.IsCompleted)
-                               .OrderBy(x => group.SortBy == "Title" ? x.Title :
-                               group.SortBy == "Date" ? (x.ToDoDate ?? DateTime.MaxValue).ToString() :
-                               group.SortBy == "Description" ? x.Description :
-                               x.TaskId.ToString()).Select(x => new TaskListVM()
-                               {
-                                   TaskId = x.TaskId,
-                                   Title = x.Title,
-                                   Description = x.Description,
-                                   ToDoDate = x.ToDoDate,
-                                   CreateDate = x.CreateDate,
-                                   CompleteDate = x.CompleteDate,
-                                   IsStarred = x.IsStarred,
-                                   IsCompleted = x.IsCompleted,
-                                   TaskGroupId = x.TaskGroupId,
-                                   SubTasks = subTaskList.Where(subTask => subTask.TaskId == x.TaskId && !subTask.IsCompleted).ToList()
-                               }).ToList(),
-            CompletedTaskList = []
+        var taskList = tasks?.Select(x => new TaskListVM()
+        {
+            TaskId = x.TaskId,
+            Title = x.Title,
+            Description = x.Description,
+            ToDoDate = x.ToDoDate,
+            CreateDate = x.CreateDate,
+            CompleteDate = x.CompleteDate,
+            IsStarred = x.IsStarred,
+            IsCompleted = x.IsCompleted,
+            TaskGroupId = x.TaskGroupId,
+        }).ToList() ?? new();
+
+        var subTaskList = subTasks?.Select(x => new TaskListVM()
+        {
+            SubTaskId = x.SubTaskId,
+            TaskId = x.TaskId,
+            Title = x.Title,
+            Description = x.Description,
+            ToDoDate = x.ToDoDate,
+            CreateDate = x.CreateDate,
+            CompleteDate = x.CompleteDate,
+            IsStarred = x.IsStarred,
+            IsCompleted = x.IsCompleted,
+            TaskGroupId = tasks.FirstOrDefault(x => x.TaskId == x.TaskId).TaskGroupId
+
+        });
+
+        if (subTaskList != null && subTaskList.Count() > 0)
+            taskList.AddRange(subTaskList);
+
+        return new()
+        {
+            IsSuccess = true,
+            Message = "Starred tasks retrieved successfully",
+            Data = new GroupTaskListVM
+            {
+                GroupId = group.GroupId,
+                GroupName = "Starred tasks",
+                SortBy = group.SortBy ?? "My order",
+                isEnableShow = true,
+
+                TaskList = taskList?.OrderBy(x => group.SortBy == "Title" ? x.Title :
+                                   group.SortBy == "Date" ? (x.ToDoDate ?? DateTime.MaxValue).ToString() :
+                                   group.SortBy == "Description" ? x.Description :
+                                   x.TaskId.ToString())?.ToList(),
+                CompletedTaskList = []
+            }
         };
-        response.IsSuccess = true;
-        return response;
     }
 
     public async Task<ResponseModel> UpdateVisibilityStatusAsync(int groupId, bool isVisible)
     {
         var group = await taskGroupRepo.GetByIdAsync(groupId);
-        if (group == null)
+        if (group == null || group.IsDeleted)
         {
             return new ResponseModel
             {
@@ -270,7 +305,7 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
     public async Task<ResponseModel> UpdateSortByAsync(int groupId, string sort)
     {
         var group = await taskGroupRepo.GetByIdAsync(groupId);
-        if (group == null)
+        if (group == null || group.IsDeleted)
         {
             return new ResponseModel
             {
@@ -287,4 +322,5 @@ public class TaskGroupService(IBaseRepository<TaskGroup> taskGroupRepo, IBaseRep
             Message = "Sort order updated successfully"
         };
     }
+
 }

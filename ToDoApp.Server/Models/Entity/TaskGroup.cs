@@ -10,5 +10,6 @@ public class TaskGroup
     public string? GroupName { get; set; }
     public bool? IsEnableShow { get; set; }
     public string? SortBy { get; set; }
+    public bool IsDeleted { get; set; }
 }
 

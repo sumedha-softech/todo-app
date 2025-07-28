@@ -7,12 +7,11 @@ import {
     CSidebarHeader,
     CSidebarToggler,
 } from '@coreui/react';
-import { cibR, cibTesla, cibAtlassian } from '@coreui/icons';
+import {cibSymantec } from '@coreui/icons';
 import CIcon from "@coreui/icons-react";
 import { AppSidebarNav } from './AppSidebarNav';
 import navigation from '../../_nav';
 import { Context } from '../../global/MyContext';
-
 
 const AppSidebar = () => {
     const { sidebarShow, setSidebarShow, unfoldable, setUnfoldable } = useContext(Context);
@@ -27,10 +26,16 @@ const AppSidebar = () => {
             onVisibleChange={(visible) => setSidebarShow(visible)}>
 
             <CSidebarHeader className="border-bottom">
-                <CSidebarBrand to="/">
-                    <span className="sidebar-brand-full"><CIcon icon={cibR} height={32} /><CIcon icon={cibTesla} height={32} /><CIcon icon={cibAtlassian} height={32} /> </span>
-                    <span style={{ color: 'white' }} className="sidebar-brand-narrow"><CIcon icon={cibR} height={32} /></span>
+                <CSidebarBrand to="/" style={{ textDecoration: "none" }}>
+                    <div className="sidebar-brand-full no-display-fix">
+                        <CIcon icon={cibSymantec} height={32} style={{ verticalAlign: 'middle' }} />
+                        <span className="brand-text">Tasks</span>
+                    </div>
+                    <span className="sidebar-brand-narrow" style={{ color: 'white' }}>
+                        <CIcon icon={cibSymantec} height={32} />
+                    </span>
                 </CSidebarBrand>
+
                 <CCloseButton
                     className="d-lg-none"
                     dark

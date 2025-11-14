@@ -2,6 +2,8 @@
 
 This is the main project repository for a modern **ToDo Application**. 
 
+# Live Demo URL: [todo-app](https://todo.sumedhasoftech.com)
+
 ## 📺 Project Demo
   
   ![TODO Project](./doc/todo-app.gif)
